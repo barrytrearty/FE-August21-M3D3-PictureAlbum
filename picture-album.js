@@ -46,11 +46,13 @@
 
 const row = document.getElementById("row");
 
-const displayPictures = function (input) {
+const displayPictures = function (input, id) {
   let newPicture = document.createElement("div");
-  newPicture.classList.add("col-md-4");
-  newPicture.innerHTML = `<div class="card mb-4 shadow-sm">
-  <img src="${input}">
+  newPicture.classList.add("col-md-4", "generatedDiv");
+  newPicture.insertAdjacentHTML(
+    "afterbegin",
+    `<div class="card mb-4 shadow-sm" id="${id}">
+  <img src="${input.src.original}">
     <p class="card-text">Helllloooooooo</p>
     <div
       class="d-flex justify-content-between align-items-center"
@@ -65,19 +67,21 @@ const displayPictures = function (input) {
         <button
           type="button"
           class="btn btn-sm btn-outline-secondary"
+          onclick="hideImage(${id})"
         >
-          Edit
+          Hide
         </button>
       </div>
-      <small class="text-muted">9 mins</small>
+      <small class="text-muted">${input.id}</small>
     </div>
   </div>
-</div>`;
+</div>`
+  );
   row.appendChild(newPicture);
 };
 
-const searchPictures = function () {
-  return fetch(`https://api.pexels.com/v1/search?query=dolphin`, {
+const searchPictures = function (input) {
+  return fetch(`https://api.pexels.com/v1/search?query=${input}`, {
     method: "GET",
     headers: {
       Authorization:
@@ -87,10 +91,34 @@ const searchPictures = function () {
     .then((response) => response.json())
     .then((data) => {
       console.log(data.photos);
-      for (i = 0; i < data.photos.length; i++) {
-        let source = data.photos[i].src.original;
-        displayPictures(source);
+      let generatedDivs = document.getElementsByClassName("generatedDiv");
+      if (generatedDivs) {
+        for (div of generatedDivs) {
+          div.remove();
+        }
       }
+      for (i = 0; i < data.photos.length; i++) {
+        let source = data.photos[i];
+        let id = data.photos[i].id;
+
+        displayPictures(source, id);
+      }
+
+      let alert = document.createElement("div");
+      alert.innerHTML = `<h3>15 pictures loaded</h3>`;
+      alert.style.backgroundColor = "red";
+      document.getElementsByTagName("header")[0].appendChild(alert);
+      setInterval(function () {
+        alert.remove();
+      }, 5000);
     })
-    .catch((error) => console.log(error));
+    .catch((error) => {
+      console.log(error);
+      alert(error);
+    });
+};
+
+const hideImage = function (id) {
+  let card = document.getElementById(id);
+  card.remove();
 };
